@@ -1,0 +1,11 @@
+/bin/
+/dcu/
+*.dproj.local
+*.lps
+**/__history/
+*.dsk
+*.identcache
+*.~dsk
+**/backup/
+/libtz/lib/tz-border/
+/libtz/lib/tz-db/
