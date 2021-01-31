@@ -2,56 +2,33 @@ unit u_TimeZoneDetect;
 
 interface
 
+{$DEFINE USE_POINT_DETECT_LIB}
+{$DEFINE SMALL_POINT}
+
 uses
   t_TzTypes;
 
 type
-  TFixedPoint = record
-    X: Integer;
-    Y: Integer;
-  end;
-  PFixedPoint = ^TFixedPoint;
-
-  TArrayOfInteger = array of Integer;
-
   TTimeZoneDetect = class
   private
     FPrevTzIndex: Integer;
     FPrevTzPolygonIndex: Integer;
 
-    FLikelyZones: TArrayOfInteger;
+    FLikelyZones: array of Integer;
     FLikelyZonesCount: Integer;
 
-    FTestPoint: TFixedPoint;
-    FTestPointPtr: PFixedPoint;
+    FTestPoint: TTimeZonePoint;
 
-    class function IsPointInRect(
-      const APoint: PFixedPoint;
-      const ARect: PTimeZoneBound
-    ): Boolean; inline;
-
-    class function IsPointInPolygon(
-      const APoint: PFixedPoint;
-      const APolygonPointsCount: Integer;
-      const APolygonFirstPoint: PTimeZonePoint
-    ): Boolean;
-
-    function IsPointInTimeZone(
-      const APoint: PFixedPoint;
-      const ATimeZone: PTimeZoneInfo
-    ): Boolean;
-
-    procedure FindLikelyZones(
-      const ANode: PTimeZoneNode;
-      const APoint: PFixedPoint
-    );
+    function IsTestPointInTimeZone(const ATimeZone: PTimeZoneInfo): Boolean;
+    procedure FindLikelyZones(const ANode: PTimeZoneNode);
   public
     function LonLatToTzName(const ALon, ALat: Double): PAnsiChar;
+    {$IFDEF DEBUG}
     function LonLatToTzNameOld(const ALon, ALat: Double): PAnsiChar;
+    {$ENDIF}
   public
     constructor Create;
   end;
-
 
 implementation
 
@@ -59,21 +36,22 @@ uses
   c_TzConst,
   u_TimeZoneTool;
 
-constructor TTimeZoneDetect.Create;
-begin
-  inherited Create;
+{$IFDEF USE_POINT_DETECT_LIB}
 
-  FPrevTzIndex := -1;
-  FPrevTzPolygonIndex := -1;
+{$LINK '..\obj\point_detect.o'}
 
-  FLikelyZonesCount := 0;
-  SetLength(FLikelyZones, Length(cTzNodeZoneInfo));
+function IsPointInRect(const APoint: TTimeZonePoint;
+  const ARect: PTimeZoneBound): Boolean; cdecl; external name
+  {$IFDEF SMALL_POINT}'_is_point_in_rect_16'{$ELSE}'_is_point_in_rect_32'{$ENDIF};
 
-  FTestPointPtr := @FTestPoint;
-end;
+function IsPointInPolygon(const APoint: TTimeZonePoint; const ACount: Integer;
+  const APolyPoints: PTimeZonePoint): Boolean; cdecl; external name
+  {$IFDEF SMALL_POINT}'_is_point_in_poly_16'{$ELSE}'_is_point_in_poly_32'{$ENDIF};
 
-class function TTimeZoneDetect.IsPointInRect(
-  const APoint: PFixedPoint;
+{$ELSE}
+
+function IsPointInRect(
+  const APoint: TTimeZonePoint;
   const ARect: PTimeZoneBound
 ): Boolean;
 begin
@@ -85,58 +63,69 @@ begin
   );
 end;
 
-class function TTimeZoneDetect.IsPointInPolygon(
-  const APoint: PFixedPoint;
+function IsPointInPolygon(
+  const APoint: TTimeZonePoint;
   const APolygonPointsCount: Integer;
   const APolygonFirstPoint: PTimeZonePoint
 ): Boolean;
 var
   I: Integer;
-  VPrevPoint: PTimeZonePoint;
-  VCurrPoint: PTimeZonePoint;
+  Y: Integer;
+  P1, P2: PTimeZonePoint;
 begin
+  {$IFDEF DEBUG}
+  Assert(APolygonPointsCount >= 3);
+  {$ENDIF}
   Result := False;
-  if APolygonPointsCount < 3 then begin
-    Exit;
-  end;
-  VPrevPoint := APolygonFirstPoint;
-  VCurrPoint := VPrevPoint;
-  Inc(VCurrPoint);
+  P1 := APolygonFirstPoint;
+  P2 := P1;
+  Inc(P2);
+  Y := APoint.Y;
   for I := 1 to APolygonPointsCount - 1 do begin
-    if (((VCurrPoint.Y <= APoint.Y) and (APoint.Y < VPrevPoint.Y)) or
-        ((VPrevPoint.Y <= APoint.Y) and (APoint.Y < VCurrPoint.Y))) and
-        (APoint.X > (VPrevPoint.X - VCurrPoint.X) * (APoint.Y - VCurrPoint.Y) / (VPrevPoint.Y - VCurrPoint.Y) + VCurrPoint.X) then
-    begin
-      Result := not Result;
+    if (((P2.Y <= Y) and (Y < P1.Y)) or ((P1.Y <= Y) and (Y < P2.Y))) then begin
+      if APoint.X > P2.X + (P1.X - P2.X) * (Y - P2.Y) / (P1.Y - P2.Y) then begin
+        Result := not Result;
+      end;
     end;
-    VPrevPoint := VCurrPoint;
-    Inc(VCurrPoint);
+    P1 := P2;
+    Inc(P2);
   end;
 end;
+{$ENDIF}
 
-function TTimeZoneDetect.IsPointInTimeZone(
-  const APoint: PFixedPoint;
-  const ATimeZone: PTimeZoneInfo
-): Boolean;
+constructor TTimeZoneDetect.Create;
+begin
+  inherited Create;
+
+  FPrevTzIndex := -1;
+  FPrevTzPolygonIndex := -1;
+
+  FLikelyZonesCount := 0;
+  SetLength(FLikelyZones, Length(cTzNodeZoneInfo));
+end;
+
+function TTimeZoneDetect.IsTestPointInTimeZone(const ATimeZone: PTimeZoneInfo): Boolean;
 
   function _IsPointInPoly(const APoly: PTimeZonePolygon): Boolean;
   var
     I: Integer;
     VHole: PTimeZoneHole;
   begin
-    Result := IsPointInPolygon(APoint, APoly.PointsCount, APoly.FirstPoint);
-    if Result then begin
-      VHole := APoly.FirstHole;
-      for I := 0 to APoly.HolesCount - 1 do begin
-        if
-          IsPointInRect(APoint, VHole.Bound) and
-          IsPointInPolygon(APoint, VHole.PointsCount, VHole.FirstPoint)
-        then begin
-          Result := False;
-          Exit;
-        end;
-        Inc(VHole);
+    Result := IsPointInPolygon(FTestPoint, APoly.PointsCount, APoly.FirstPoint);
+    if not Result then begin
+      Exit;
+    end;
+
+    VHole := APoly.FirstHole;
+    for I := 0 to APoly.HolesCount - 1 do begin
+      if
+        IsPointInRect(FTestPoint, VHole.Bound) and
+        IsPointInPolygon(FTestPoint, VHole.PointsCount, VHole.FirstPoint)
+      then begin
+        Result := False;
+        Exit;
       end;
+      Inc(VHole);
     end;
   end;
 
@@ -146,7 +135,7 @@ var
 begin
   Result := False;
 
-  if not IsPointInRect(APoint, ATimeZone.Bound) then begin
+  if not IsPointInRect(FTestPoint, ATimeZone.Bound) then begin
     Exit;
   end;
 
@@ -173,27 +162,27 @@ begin
   end;
 end;
 
-procedure TTimeZoneDetect.FindLikelyZones(
-  const ANode: PTimeZoneNode;
-  const APoint: PFixedPoint
-);
+procedure TTimeZoneDetect.FindLikelyZones(const ANode: PTimeZoneNode);
 var
   I: Integer;
 begin
-  if IsPointInRect(APoint, @ANode.Bound) then begin
-    if ANode.ZoneInfoCount > 0 then begin
-      Assert(FLikelyZonesCount + ANode.ZoneInfoCount < Length(FLikelyZones));
-      for I := 0 to ANode.ZoneInfoCount - 1 do begin
-        FLikelyZones[FLikelyZonesCount] := ANode.FirstZoneInfoIndex + I;
-        Inc(FLikelyZonesCount);
-      end;
+  if not IsPointInRect(FTestPoint, @ANode.Bound) then begin
+    Exit;
+  end;
+  if ANode.ZoneInfoCount > 0 then begin
+    {$IFDEF DEBUG}
+    Assert(FLikelyZonesCount + ANode.ZoneInfoCount < Length(FLikelyZones));
+    {$ENDIF}
+    for I := 0 to ANode.ZoneInfoCount - 1 do begin
+      FLikelyZones[FLikelyZonesCount] := ANode.FirstZoneInfoIndex + I;
+      Inc(FLikelyZonesCount);
     end;
-    for I := 0 to 3 do begin
-      if ANode.SubNode[I] = nil then begin
-        Break;
-      end;
-      FindLikelyZones(ANode.SubNode[I], APoint);
+  end;
+  for I := 0 to 3 do begin
+    if ANode.SubNode[I] = nil then begin
+      Break;
     end;
+    FindLikelyZones(ANode.SubNode[I]);
   end;
 end;
 
@@ -209,22 +198,21 @@ begin
 
   VTzIndex := FPrevTzIndex;
   if (VTzIndex >= 0) and (VTzIndex < Length(cTzNodeZoneInfo)) then begin
-    if IsPointInTimeZone(FTestPointPtr, cTzNodeZoneInfo[VTzIndex]) then begin
+    if IsTestPointInTimeZone(cTzNodeZoneInfo[VTzIndex]) then begin
       Result := cTzNodeZoneInfo[VTzIndex].TZID;
       Exit;
     end;
   end;
 
   FLikelyZonesCount := 0;
-
-  FindLikelyZones(cTzTreeRoot, FTestPointPtr);
+  FindLikelyZones(cTzTreeRoot);
 
   for I := 0 to FLikelyZonesCount - 1 do begin
     VTzIndex := FLikelyZones[I];
     if VTzIndex = FPrevTzIndex then begin
       Continue;
     end;
-    if IsPointInTimeZone(FTestPointPtr, cTzNodeZoneInfo[VTzIndex]) then begin
+    if IsTestPointInTimeZone(cTzNodeZoneInfo[VTzIndex]) then begin
       Result := cTzNodeZoneInfo[VTzIndex].TZID;
       FPrevTzIndex := VTzIndex;
       Break;
@@ -232,6 +220,7 @@ begin
   end;
 end;
 
+{$IFDEF DEBUG}
 function TTimeZoneDetect.LonLatToTzNameOld(const ALon, ALat: Double): PAnsiChar;
 var
   I: Integer;
@@ -244,7 +233,7 @@ begin
 
   VTzIndex := FPrevTzIndex;
   if (VTzIndex >= 0) and (VTzIndex < Length(cTzInfo)) then begin
-    if IsPointInTimeZone(FTestPointPtr, cTzInfo[VTzIndex]) then begin
+    if IsTestPointInTimeZone(cTzInfo[VTzIndex]) then begin
       Result := cTzInfo[VTzIndex].TZID;
       Exit;
     end;
@@ -254,12 +243,20 @@ begin
     if I = FPrevTzIndex then begin
       Continue;
     end;
-    if IsPointInTimeZone(FTestPointPtr, cTzInfo[I]) then begin
+    if IsTestPointInTimeZone(cTzInfo[I]) then begin
       Result := cTzInfo[I].TZID;
       FPrevTzIndex := I;
       Break;
     end;
   end;
 end;
+{$ENDIF}
+
+initialization
+  {$IFDEF SMALL_POINT}
+  Assert(SizeOf(TTimeZonePoint) = 4);
+  {$ELSE}
+  Assert(SizeOf(TTimeZonePoint) = 8);
+  {$ENDIF}
 
 end.

@@ -202,24 +202,21 @@ begin
 end;
 
 procedure TTzWriterToPas.WriteTzTypesUnit;
-var
-  VPointType: string;
+const
+  cIntType: array [Boolean] of string = ('SmallInt', 'Integer');
 begin
-  if FCoordConverter.Precision > 16 then begin
-    VPointType := 'Integer'; // 4 bytes
-  end else begin
-    VPointType := 'SmallInt'; // 2 bytes
-  end;
-
   WriteString(
     'unit ' + cTzTypesUnitName + ';' + cCRLF +
     cCRLF +
     'interface' + cCRLF +
     cCRLF +
     'type' + cCRLF +
+    cTab + 'TTimeZoneInt = ' + cIntType[FCoordConverter.Precision > 16] + ';' + cCRLF +
+    cTab + 'PTimeZoneInt = ^TTimeZoneInt;' + cCRLF +
+    cCRLF +
     cTab + 'TTimeZonePoint = packed record' + cCRLF +
-    cTab + cTab + 'X: ' + VPointType + ';' + cCRLF +
-    cTab + cTab + 'Y: ' + VPointType + ';' + cCRLF +
+    cTab + cTab + 'X: TTimeZoneInt;' + cCRLF +
+    cTab + cTab + 'Y: TTimeZoneInt;' + cCRLF +
     cTab + 'end;' + cCRLF +
     cTab + 'PTimeZonePoint = ^TTimeZonePoint;' + cCRLF +
     cCRLF +
@@ -294,7 +291,9 @@ begin
   VConst :=
     cTab + Format('cPrecision = %d;', [FCoordConverter.Precision]) + cCRLF +
     cCRLF +
-    cTab + Format('cTzInfo: array [0..%d] of PTimeZoneInfo = (%s);', [FTzNameList.Count - 1, VConst]) + cCRLF;
+    cTab + '{$IFDEF DEBUG}' + cCRLF +
+    cTab + Format('cTzInfo: array [0..%d] of PTimeZoneInfo = (%s);', [FTzNameList.Count - 1, VConst]) + cCRLF +
+    cTab + '{$ENDIF}' + cCRLF;
 
   WriteString(
     'unit ' + cTzConstUnitName + ';' + cCRLF +

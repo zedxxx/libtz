@@ -42,8 +42,10 @@ begin
       VTzName := VTzDetect.LonLatToTzName(cTestCases[I].X, cTestCases[I].Y);
       CheckEqualsString(cTestCases[I].Name, string(VTzName));
 
+      {$IFDEF DEBUG}
       VTzName := VTzDetect.LonLatToTzNameOld(cTestCases[I].X, cTestCases[I].Y);
       CheckEqualsString(cTestCases[I].Name, string(VTzName));
+      {$ENDIF}
     end;
   finally
     VTzDetect.Free;
@@ -97,8 +99,8 @@ var
 begin
   VAliases := TBundledTimeZone.KnownAliases;
 
-  for I := 0 to Length(cTzInfo) - 1 do begin
-    VTzName := string(cTzInfo[I].TZID);
+  for I := 0 to Length(cTzNodeZoneInfo) - 1 do begin
+    VTzName := string(cTzNodeZoneInfo[I].TZID);
     VTzBundled := TBundledTimeZone.GetTimeZone(VTzName);
     VTzID := VTzBundled.ID;
     if (VTzID <> VTzName) and not _IsAlias(VTzName, VTzID) then begin

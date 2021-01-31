@@ -1,0 +1,1 @@
+gcc -c -O3 point_detect.c -o ./../../obj/point_detect.o
