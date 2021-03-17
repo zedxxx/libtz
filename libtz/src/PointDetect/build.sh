@@ -1,1 +1,1 @@
-gcc -c -O3 point_detect.c -o ./../../obj/point_detect.o
+gcc -c -O3 -DNDEBUG -DSMALL_INT -Wall -Wpedantic -Wextra point_detect.c -o ./../../obj/point_detect.o

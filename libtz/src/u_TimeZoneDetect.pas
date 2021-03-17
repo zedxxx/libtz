@@ -26,6 +26,8 @@ type
     {$IFDEF DEBUG}
     function LonLatToTzNameOld(const ALon, ALat: Double): PAnsiChar;
     {$ENDIF}
+
+    function GetTimeZoneInfo(const ATzName: PAnsiChar): PTimeZoneInfo;
   public
     constructor Create;
   end;
@@ -252,11 +254,32 @@ begin
 end;
 {$ENDIF}
 
+function TTimeZoneDetect.GetTimeZoneInfo(const ATzName: PAnsiChar): PTimeZoneInfo;
+var
+  I: Integer;
+begin
+  Result := nil;
+
+  if ATzName = cTzNodeZoneInfo[FPrevTzIndex].TZID then begin
+    Result := cTzNodeZoneInfo[FPrevTzIndex];
+    Exit;
+  end;
+
+  for I := 0 to Length(cTzNodeZoneInfo) - 1 do begin
+    if ATzName = cTzNodeZoneInfo[I].TZID then begin
+      Result := cTzNodeZoneInfo[I];
+      Break;
+    end;
+  end;
+end;
+
+{$IFDEF USE_POINT_DETECT_LIB}
 initialization
   {$IFDEF SMALL_POINT}
   Assert(SizeOf(TTimeZonePoint) = 4);
   {$ELSE}
   Assert(SizeOf(TTimeZonePoint) = 8);
   {$ENDIF}
+{$ENDIF}
 
 end.

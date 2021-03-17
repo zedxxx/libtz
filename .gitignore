@@ -9,3 +9,4 @@
 **/backup/
 /libtz/lib/tz-border/
 /libtz/lib/tz-db/
+/libtz/src/PointDetect/cmake-build-debug/

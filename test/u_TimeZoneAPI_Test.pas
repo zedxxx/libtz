@@ -7,6 +7,8 @@ uses
 
 type
   TTimeZoneAPI = class(TTestCase)
+  protected
+    procedure SetUp; override;
   published
     procedure TestAPI;
     procedure BenchAPI;
@@ -24,6 +26,13 @@ uses
 
 { TTimeZoneAPI }
 
+procedure TTimeZoneAPI.SetUp;
+begin
+  inherited SetUp;
+
+  Check(LibTzInitialize, 'Library is not initialized!');
+end;
+
 procedure TTimeZoneAPI.TestAPI;
 var
   I: Integer;
@@ -31,9 +40,8 @@ var
   VResult: Boolean;
   VUtcTime: TDateTime;
   VTzInfo: TTzInfo;
+  VTzVersion: PTzVersionInfo;
 begin
-  LibTzInitialize;
-
   VCtx := tz_ctx_new();
   try
     Assert(VCtx <> nil);
@@ -49,6 +57,16 @@ begin
   finally
     tz_ctx_free(VCtx);
   end;
+
+  VTzVersion := tz_get_version();
+
+  OutputDebugString(
+    PChar(
+      'libtz v' + string(VTzVersion.Lib) + ', ' +
+      'tzdb v' + string(VTzVersion.Data) + ', ' +
+      'tzborder v' + string(VTzVersion.Border)
+    )
+  );
 end;
 
 procedure TTimeZoneAPI.BenchAPI;
@@ -62,13 +80,11 @@ var
   VTzInfo: TTzInfo;
   VTime: TStopwatch;
 begin
-  VTime := TStopwatch.Create;
-
-  LibTzInitialize;
-
   VCtx := tz_ctx_new();
   try
-    for J := 0 to cBenchCount - 1 do
+    VTime := TStopwatch.Create;
+
+    for J := 0 to cBenchCount - 1 do begin
       for I := 0 to Length(cBenchCases) - 1 do begin
         VUtcTime := ISO8601ToDate(cBenchCases[I].UTC);
 
@@ -78,11 +94,12 @@ begin
 
         tz_check_result(VCtx, VResult);
       end;
+    end;
+
+    OutputDebugString(PChar(IntToStr(VTime.ElapsedMilliseconds) + ' ms'));
   finally
     tz_ctx_free(VCtx);
   end;
-
-  OutputDebugString(PChar(IntToStr(VTime.ElapsedMilliseconds) + ' ms'));
 end;
 
 initialization
