@@ -21,7 +21,6 @@ implementation
 
 uses
   SysUtils,
-  c_TzConst,
   u_TimeZoneCtx;
 
 procedure _SaveErrorMessage(const ACtx: Pointer; const AMsg: string); overload;

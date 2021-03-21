@@ -40,15 +40,15 @@ uses
 
 {$IFDEF USE_POINT_DETECT_LIB}
 
-{$LINK '..\obj\point_detect.o'}
+{$LINK '.\obj\point_detect.o'}
 
 function IsPointInRect(const APoint: TTimeZonePoint;
-  const ARect: PTimeZoneBound): Boolean; cdecl; external name
-  {$IFDEF SMALL_POINT}'_is_point_in_rect_16'{$ELSE}'_is_point_in_rect_32'{$ENDIF};
+  const ARect: PTimeZoneBound): Boolean; cdecl; external name {$IFNDEF FPC}'_' + {$ENDIF}
+  {$IFDEF SMALL_POINT}'is_point_in_rect_16'{$ELSE}'is_point_in_rect_32'{$ENDIF};
 
 function IsPointInPolygon(const APoint: TTimeZonePoint; const ACount: Integer;
-  const APolyPoints: PTimeZonePoint): Boolean; cdecl; external name
-  {$IFDEF SMALL_POINT}'_is_point_in_poly_16'{$ELSE}'_is_point_in_poly_32'{$ENDIF};
+  const APolyPoints: PTimeZonePoint): Boolean; cdecl; external name {$IFNDEF FPC}'_' + {$ENDIF}
+  {$IFDEF SMALL_POINT}'is_point_in_poly_16'{$ELSE}'is_point_in_poly_32'{$ENDIF};
 
 {$ELSE}
 

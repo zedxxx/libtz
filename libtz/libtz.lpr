@@ -17,8 +17,7 @@ exports
   tz_get_info,
   tz_get_info_full,
   tz_get_error,
-  tz_get_version,
-  tz_get_precision;
+  tz_get_version;
 
 begin
   IsMultiThread := True;
