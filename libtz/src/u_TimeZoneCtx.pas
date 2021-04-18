@@ -141,8 +141,12 @@ procedure TTimeZoneCtx.GetInfoFull(const ALon, ALat: Double;
     FTzInfoFull.PolygonsInternal[APolyIndex].IsHole := AIsHole;
     SetLength(FTzInfoFull.PolygonsInternal[APolyIndex].Points, APointsCount);
 
+    if APointsCount = 0 then begin
+      Exit;
+    end;
+
     VFixedPoint := APoints;
-    VFloatPoint := @FTzInfoFull.PolygonsInternal[APolyIndex].Points;
+    VFloatPoint := @FTzInfoFull.PolygonsInternal[APolyIndex].Points[0];
 
     for I := 0 to APointsCount - 1 do begin
       VFloatPoint.X := FixedToLon(VFixedPoint.X, cPrecision);
@@ -163,6 +167,8 @@ var
   VTzYearSegment: TYearSegment;
   VTzYearSegmentArray: TYearSegmentArray;
 begin
+  FillChar(AInfo^, SizeOf(TTzInfoFull), 0);
+
   VTzName := FTzDetect.LonLatToTzName(ALon, ALat);
 
   if VTzName = nil then begin
@@ -304,11 +310,9 @@ var
 begin
   SetLength(Periods, AValue);
   SetLength(PeriodsPtr, AValue);
-
   for I := 0 to AValue - 1 do begin
     PeriodsPtr[I] := @Periods[I];
   end;
-
   SetLength(PeriodsStr, AValue);
 end;
 
@@ -329,20 +333,26 @@ var
   I: Integer;
 begin
   for I := 0 to Length(PeriodsStr) - 1 do begin
-    Periods[I].Abbrv  := PAnsiChar(PeriodsStr[I].Abbrv);
-    Periods[I].Name   := PAnsiChar(PeriodsStr[I].Name);
+    Periods[I].Abbrv := PAnsiChar(PeriodsStr[I].Abbrv);
+    Periods[I].Name  := PAnsiChar(PeriodsStr[I].Name);
   end;
 
   AInfo.PeriodsCount  := Length(PeriodsPtr);
-  AInfo.Periods       := @PeriodsPtr;
+  if AInfo.PeriodsCount > 0 then begin
+    AInfo.Periods := PeriodsPtr[0];
+  end;
 
   AInfo.PolygonsCount := Length(PolygonsPtr);
-  AInfo.Polygons      := @PolygonsPtr;
+  if AInfo.PolygonsCount > 0 then begin
+    AInfo.Polygons := PolygonsPtr[0];
+  end;
 
   for I := 0 to AInfo.PolygonsCount - 1 do begin
     Polygons[I].IsHole := PolygonsInternal[I].IsHole;
     Polygons[I].PointsCount := Length(PolygonsInternal[I].Points);
-    Polygons[I].Points := @PolygonsInternal[I].Points;
+    if Polygons[I].PointsCount > 0 then begin
+      Polygons[I].Points := @PolygonsInternal[I].Points[0];
+    end;
   end;
 end;
 
