@@ -58,6 +58,7 @@ var
   VCtx: TTimeZoneCtx;
   VUtcTime: TDateTime;
   VTzInfo: TTzInfo;
+  VTzInfoFull: TTzInfoFull;
 begin
   VCtx := TTimeZoneCtx.Create;
   try
@@ -68,6 +69,8 @@ begin
 
       CheckEqualsString(cTestCases[I].Name, string(VTzInfo.Name));
       CheckEquals(cTestCases[I].Offset, VTzInfo.Offset);
+
+      VCtx.GetInfoFull(cTestCases[I].X, cTestCases[I].Y, VUtcTime, @VTzInfoFull);
     end;
   finally
     VCtx.Free;
