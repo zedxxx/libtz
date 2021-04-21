@@ -54,7 +54,7 @@
         <DCC_F>false</DCC_F>
         <DCC_K>false</DCC_K>
         <DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;Vcl;Vcl.Imaging;Vcl.Touch;Vcl.Samples;Vcl.Shell;$(DCC_Namespace)</DCC_Namespace>
-        <DCC_UnitSearchPath>$(BDS)\Source\DUnit\src;..\libtz\src;..\libtz\lib\tz-db;..\libtz\lib\tz-border;..\libtz_api;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
+        <DCC_UnitSearchPath>$(BDS)\Source\DUnit\src;..\libtz\src;..\libtz\lib\tz-db;..\libtz\lib\tz-border;..\libtz_api;..\libtz\obj;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
         <VerInfo_Locale>1049</VerInfo_Locale>
         <VerInfo_Keys>CompanyName=;FileDescription=$(MSBuildProjectName);FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProgramID=com.embarcadero.$(MSBuildProjectName);ProductName=$(MSBuildProjectName);ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
         <SanitizedProjectName>libtz_test</SanitizedProjectName>
@@ -98,6 +98,7 @@
         <DCCReference Include="u_TimeZone_Test.pas"/>
         <DCCReference Include="u_TimeZoneAPI_Test.pas"/>
         <DCCReference Include="u_TimeZone_TestCases.pas"/>
+        <DCCReference Include="u_TimeZoneInfoWriter.pas"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>

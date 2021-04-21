@@ -46,6 +46,8 @@ type
   PTzPeriod = ^TTzPeriod;
 
   TTzInfoFull = record
+    Name: PAnsiChar;
+
     PeriodsCount: Integer;
     Periods: PTzPeriod;
 

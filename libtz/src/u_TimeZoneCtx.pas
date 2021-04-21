@@ -13,6 +13,8 @@ uses
 
 type
   TTzInfoFullInternal = record
+    Name: PAnsiChar;
+
     Periods: array of TTzPeriod;
     PeriodsPtr: array of PTzPeriod;
 
@@ -159,7 +161,6 @@ procedure TTimeZoneCtx.GetInfoFull(const ALon, ALat: Double;
 
 var
   I, J, K: Integer;
-  VTzName: PAnsiChar;
   VTzInfo: PTimeZoneInfo;
   VTzPoly: PTimeZonePolygon;
   VTzHole: PTimeZoneHole;
@@ -169,9 +170,9 @@ var
 begin
   FillChar(AInfo^, SizeOf(TTzInfoFull), 0);
 
-  VTzName := FTzDetect.LonLatToTzName(ALon, ALat);
+  FTzInfoFull.Name := FTzDetect.LonLatToTzName(ALon, ALat);
 
-  if VTzName = nil then begin
+  if FTzInfoFull.Name = nil then begin
     FTzInfoFull.SetPeriodsCount(1);
     AddPeriod(0, '', '', OffsetFromLongitude(ALon), 0, 0, TTzLocalTimeType(lttStandard));
 
@@ -179,7 +180,7 @@ begin
   end else begin
     // Periods
 
-    VTzBundled := TBundledTimeZone.GetTimeZone(string(VTzName));
+    VTzBundled := TBundledTimeZone.GetTimeZone(string(FTzInfoFull.Name));
 
     VTzYearSegmentArray := VTzBundled.GetYearBreakdown(
       YearOf(VTzBundled.ToLocalTime(AUtcTime))
@@ -206,7 +207,7 @@ begin
 
     // Polygons
 
-    VTzInfo := FTzDetect.GetTimeZoneInfo(VTzName);
+    VTzInfo := FTzDetect.GetTimeZoneInfo(FTzInfoFull.Name);
     Assert(VTzInfo <> nil);
 
     K := VTzInfo.PolygonsCount;
@@ -332,6 +333,8 @@ procedure TTzInfoFullInternal.ToTzInfoFull(const AInfo: PTzInfoFull);
 var
   I: Integer;
 begin
+  AInfo.Name := Name;
+
   for I := 0 to Length(PeriodsStr) - 1 do begin
     Periods[I].Abbrv := PAnsiChar(PeriodsStr[I].Abbrv);
     Periods[I].Name  := PAnsiChar(PeriodsStr[I].Name);

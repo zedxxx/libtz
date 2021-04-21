@@ -38,13 +38,13 @@ var
 begin
   VTzDetect := TTimeZoneDetect.Create;
   try
-    for I := 0 to Length(cTestCases) - 1 do begin
-      VTzName := VTzDetect.LonLatToTzName(cTestCases[I].X, cTestCases[I].Y);
-      CheckEqualsString(cTestCases[I].Name, string(VTzName));
+    for I := 0 to Length(GTestCases) - 1 do begin
+      VTzName := VTzDetect.LonLatToTzName(GTestCases[I].X, GTestCases[I].Y);
+      CheckEqualsString(GTestCases[I].Name, string(VTzName));
 
       {$IFDEF DEBUG}
-      VTzName := VTzDetect.LonLatToTzNameOld(cTestCases[I].X, cTestCases[I].Y);
-      CheckEqualsString(cTestCases[I].Name, string(VTzName));
+      VTzName := VTzDetect.LonLatToTzNameOld(GTestCases[I].X, GTestCases[I].Y);
+      CheckEqualsString(GTestCases[I].Name, string(VTzName));
       {$ENDIF}
     end;
   finally
@@ -62,15 +62,17 @@ var
 begin
   VCtx := TTimeZoneCtx.Create;
   try
-    for I := 0 to Length(cTestCases) - 1 do begin
-      VUtcTime := ISO8601ToDate(cTestCases[I].UTC);
+    for I := 0 to Length(GTestCases) - 1 do begin
+      VUtcTime := ISO8601ToDate(GTestCases[I].Utc);
 
-      VCtx.GetInfo(cTestCases[I].X, cTestCases[I].Y, VUtcTime, @VTzInfo);
+      VCtx.GetInfo(GTestCases[I].X, GTestCases[I].Y, VUtcTime, @VTzInfo);
 
-      CheckEqualsString(cTestCases[I].Name, string(VTzInfo.Name));
-      CheckEquals(cTestCases[I].Offset, VTzInfo.Offset);
+      CheckEqualsString(GTestCases[I].Name, string(VTzInfo.Name));
+      CheckEquals(GTestCases[I].Offset, VTzInfo.Offset);
 
-      VCtx.GetInfoFull(cTestCases[I].X, cTestCases[I].Y, VUtcTime, @VTzInfoFull);
+      VCtx.GetInfoFull(GTestCases[I].X, GTestCases[I].Y, VUtcTime, @VTzInfoFull);
+
+      CheckEquals(GTestCases[I].PeriodsCount, VTzInfoFull.PeriodsCount);
     end;
   finally
     VCtx.Free;

@@ -40,11 +40,7 @@ uses
 
 {$IFDEF USE_POINT_DETECT_LIB}
 
-{$IFDEF FPC}
-  {$LINK '.\obj\point_detect.o'}
-{$ELSE}
-  {$LINK '..\obj\point_detect.o'}
-{$ENDIF}
+{$LINK 'point_detect.o'}
 
 function IsPointInRect(const APoint: TTimeZonePoint;
   const ARect: PTimeZoneBound): Boolean; cdecl; external name {$IFNDEF FPC}'_' + {$ENDIF}
