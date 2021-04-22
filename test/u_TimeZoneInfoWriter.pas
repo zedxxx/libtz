@@ -10,7 +10,6 @@ uses
 type
   ITimeZoneInfoWriter = interface
     ['{1BC5FE76-EE9D-413C-BE2B-4D85031EE520}']
-
     function ToKml(const ATzInfoFull: PTzInfoFull): string;
   end;
 
@@ -21,10 +20,15 @@ implementation
 type
   TTimeZoneInfoWriter = class(TInterfacedObject, ITimeZoneInfoWriter)
   private
+    FFormatSettings: TFormatSettings;
+  private
+    class function GetDescription(const ATzInfoFull: PTzInfoFull): string;
     class function HtmlEncode(const AText: string): string; static;
   private
     { ITimeZoneInfoWriter }
     function ToKml(const ATzInfoFull: PTzInfoFull): string;
+  public
+    constructor Create;
   end;
 
 function CreateTzInfoWriter: ITimeZoneInfoWriter;
@@ -34,7 +38,95 @@ end;
 
 { TTimeZoneInfoWriter }
 
+constructor TTimeZoneInfoWriter.Create;
+begin
+  inherited Create;
+  FFormatSettings.DecimalSeparator := '.';
+end;
+
 function TTimeZoneInfoWriter.ToKml(const ATzInfoFull: PTzInfoFull): string;
+type
+  TPolyRec = record
+    Outer: string;
+    Inner: array of string;
+  end;
+
+  function PointsToStr(const ACount: Integer; APoints: PTzDoublePoint): string;
+  var
+    I: Integer;
+  begin
+    Result := '';
+    for I := 0 to ACount - 1 do begin
+      Result := Result + Format('%.6f,%.6f,0 ', [APoints.X, APoints.Y], FFormatSettings);
+      Inc(APoints);
+    end;
+  end;
+
+  function PolygonsToStr(const APolygons: TArray<TPolyRec>): string;
+  var
+    I, J: Integer;
+  begin
+    Result := '';
+    for I := 0 to Length(APolygons) - 1 do begin
+      Result := Result +
+        '<Placemark><name>' + IntToStr(I+1) + '</name>' +
+        '<Style><LineStyle><color>ffff0000</color></LineStyle>' +
+        '<PolyStyle><color>66ff5555</color></PolyStyle>' +
+        '</Style><Polygon>' +
+        '<outerBoundaryIs><LinearRing><extrude>1</extrude><coordinates> ' +
+        APolygons[I].Outer +
+        '</coordinates></LinearRing></outerBoundaryIs>';
+
+      for J := 0 to Length(APolygons[I].Inner) - 1 do begin
+        Result := Result +
+          '<innerBoundaryIs><LinearRing><extrude>1</extrude><coordinates>' +
+          APolygons[I].Inner[J] +
+          '</coordinates></LinearRing></innerBoundaryIs>';
+      end;
+
+      Result := Result + '</Polygon></Placemark>';
+    end;
+  end;
+
+  function GetPolygonsArray: TArray<TPolyRec>;
+  var
+    I, J, K: Integer;
+    VPoly: PTzPolygon;
+  begin
+    K := -1;
+    SetLength(Result, ATzInfoFull.PolygonsCount);
+    VPoly := ATzInfoFull.Polygons;
+    for I := 0 to ATzInfoFull.PolygonsCount - 1 do begin
+      if not VPoly.IsHole then begin
+        Inc(K);
+        Result[K].Outer := PointsToStr(VPoly.PointsCount, VPoly.Points);
+      end else begin
+        Assert(K>=0);
+        J := Length(Result[K].Inner);
+        SetLength(Result[K].Inner, J+1);
+        Result[K].Inner[J] := PointsToStr(VPoly.PointsCount, VPoly.Points);
+      end;
+      Inc(VPoly);
+    end;
+    SetLength(Result, K+1);
+  end;
+
+begin
+  Result :=
+    '<?xml version="1.0" encoding="UTF-8"?>' +
+    '<kml xmlns="http://www.opengis.net/kml/2.2" ' +
+    'xmlns:gx="http://www.google.com/kml/ext/2.2" ' +
+    'xmlns:kml="http://www.opengis.net/kml/2.2" ' +
+    'xmlns:atom="http://www.w3.org/2005/Atom">' +
+    '<Document>' +
+    '<name>' + string(AnsiString(ATzInfoFull.Name)) + '</name>' +
+    '<description><![CDATA[' + GetDescription(ATzInfoFull) + ']]></description>' +
+	  '<open>1</open>' +
+    PolygonsToStr( GetPolygonsArray() ) +
+    '</Document></kml>';
+end;
+
+class function TTimeZoneInfoWriter.GetDescription(const ATzInfoFull: PTzInfoFull): string;
 const
   CLineBreak = '</br>';
 type
@@ -91,25 +183,18 @@ const
 var
   I: Integer;
   VPeriod: PTzPeriod;
-  VDesc: string;
 begin
-  Result := '';
-
-  VDesc := 'Time zone name: ' + HtmlFormat(string(AnsiString(ATzInfoFull.Name)), [fsBold]) + CLineBreak;
-
   if ATzInfoFull.PeriodsCount = 1 then begin
-    VDesc := VDesc + CLineBreak +
-      Format('There is one time period in the %d year:', [YearOfPeriods()]);
+    Result := Format('There is one time period in the %d year:', [YearOfPeriods()]);
   end else begin
-    VDesc := VDesc + CLineBreak +
-      Format('There are %d time periods in the %d year:', [ATzInfoFull.PeriodsCount, YearOfPeriods()]);
+    Result := Format('There are %d time periods in the %d year:', [ATzInfoFull.PeriodsCount, YearOfPeriods()]);
   end;
 
   VPeriod := ATzInfoFull.Periods;
   for I := 0 to ATzInfoFull.PeriodsCount - 1 do begin
     case VPeriod.TimeType of
       lttStandard: begin
-        VDesc := VDesc + '<hr>' +
+        Result := Result + '<hr>' +
           '<p style="color:green;">' +
           InitialFmt(
             CTimeType[VPeriod.TimeType],
@@ -127,7 +212,7 @@ begin
       end;
 
       lttDaylight: begin
-        VDesc := VDesc + '<hr>' +
+        Result := Result + '<hr>' +
           '<p style="color:blue;">' +
           InitialFmt(
             CTimeType[VPeriod.TimeType],
@@ -146,7 +231,7 @@ begin
       end;
 
       lttAmbiguous: begin
-        VDesc := VDesc + '<hr>' +
+        Result := Result + '<hr>' +
           '<p style="color:gray;">' +
           InitialFmt(
             CTimeType[VPeriod.TimeType],
@@ -164,7 +249,7 @@ begin
       end;
 
       lttInvalid: begin
-        VDesc := VDesc + '<hr>' +
+        Result := Result + '<hr>' +
           '<p style="color:red;">' +
           InitialFmt(
             CTimeType[VPeriod.TimeType],
@@ -189,9 +274,6 @@ begin
 
     Inc(VPeriod);
   end;
-
-
-  // ToDo
 end;
 
 class function TTimeZoneInfoWriter.HtmlEncode(const AText: string): string;

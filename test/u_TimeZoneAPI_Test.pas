@@ -20,6 +20,7 @@ uses
   Windows,
   SysUtils,
   DateUtils,
+  IOUtils,
   Diagnostics,
   libtz,
   u_TimeZone_TestCases,
@@ -62,7 +63,11 @@ begin
       CheckEquals(GTestCases[I].PeriodsCount, VTzInfoFull.PeriodsCount);
 
       if I = 0 then begin
-        CreateTzInfoWriter().ToKml(@VTzInfoFull);
+        TFile.WriteAllText(
+          ExtractFilePath(ParamStr(0)) + 'TestCase' + IntToStr(I) + '.kml',
+          CreateTzInfoWriter().ToKml(@VTzInfoFull),
+          TEncoding.UTF8
+        )
       end;
     end;
   finally
