@@ -109,6 +109,7 @@ begin
         VTime.Stop;
 
         tz_check_result(VCtx, VResult);
+        Check(VResult);
       end;
     end;
 

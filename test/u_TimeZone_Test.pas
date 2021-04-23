@@ -90,7 +90,6 @@ var
     Result := False;
     for I := 0 to Length(VAliases) - 1 do begin
       if VAliases[I] = ATzName then begin
-        OutputDebugString(PChar(ATzName + ' --> ' + ATzID));
         Result := True;
         Break;
       end;
@@ -108,8 +107,9 @@ begin
     VTzName := string(cTzNodeZoneInfo[I].TZID);
     VTzBundled := TBundledTimeZone.GetTimeZone(VTzName);
     VTzID := VTzBundled.ID;
-    if (VTzID <> VTzName) and not _IsAlias(VTzName, VTzID) then begin
-      Assert(False);
+    if VTzID <> VTzName then begin
+      Check( _IsAlias(VTzName, VTzID) );
+      OutputDebugString(PChar('Alias: ' + VTzName + ' --> ' + VTzID));
     end;
   end;
 end;
