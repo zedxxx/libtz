@@ -18,6 +18,8 @@ exports
   tz_get_error,
   tz_get_version;
 
+{$R *.res}
+
 begin
   IsMultiThread := True;
   DisableThreadLibraryCalls(HInstance);

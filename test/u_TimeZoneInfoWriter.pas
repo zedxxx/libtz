@@ -229,7 +229,6 @@ begin
           ) +
           '</p>';
       end;
-
       lttAmbiguous: begin
         Result := Result + '<hr>' +
           '<p style="color:gray;">' +
@@ -247,7 +246,6 @@ begin
           ) +
           '</p>';
       end;
-
       lttInvalid: begin
         Result := Result + '<hr>' +
           '<p style="color:red;">' +

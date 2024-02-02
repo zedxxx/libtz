@@ -1,4 +1,4 @@
-program libtz_test;
+program Test;
 
 {$IFDEF CONSOLE_TESTRUNNER}
   {$APPTYPE CONSOLE}
