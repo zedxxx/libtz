@@ -11,3 +11,5 @@
 /libtz/lib/tz-db/
 /libtz/src/PointDetect/cmake-build-debug/
 /.release/*
+*.res
+

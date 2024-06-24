@@ -18,9 +18,7 @@ implementation
 uses
   Windows,
   Types,
-  SysUtils,
   DateUtils,
-  Math,
   TZDB,
   c_TzConst,
   t_TimeZoneCtx,

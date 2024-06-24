@@ -45,11 +45,21 @@ var
   VTzInfoFull: TTzInfoFull;
   VTzVersion: PTzVersionInfo;
 begin
+  VTzVersion := tz_get_version();
+
+  OutputDebugString(
+    PChar(
+      'libtz v' + string(VTzVersion.Lib) + ', ' +
+      'tzdb v' + string(VTzVersion.Data) + ', ' +
+      'tzborder v' + string(VTzVersion.Border)
+    )
+  );
+
   VCtx := tz_ctx_new();
   try
     Assert(VCtx <> nil);
     for I := 0 to Length(GTestCases) - 1 do begin
-      VUtcTime := ISO8601ToDate(GTestCases[I].UTC);
+      VUtcTime := ISO8601ToDate(GTestCases[I].Utc);
 
       VResult := tz_get_info(VCtx, GTestCases[I].X, GTestCases[I].Y, VUtcTime, @VTzInfo);
       tz_check_result(VCtx, VResult);
@@ -67,27 +77,17 @@ begin
           ExtractFilePath(ParamStr(0)) + 'TestCase' + IntToStr(I) + '.kml',
           CreateTzInfoWriter().ToKml(@VTzInfoFull),
           TEncoding.UTF8
-        )
+        );
       end;
     end;
   finally
     tz_ctx_free(VCtx);
   end;
-
-  VTzVersion := tz_get_version();
-
-  OutputDebugString(
-    PChar(
-      'libtz v' + string(VTzVersion.Lib) + ', ' +
-      'tzdb v' + string(VTzVersion.Data) + ', ' +
-      'tzborder v' + string(VTzVersion.Border)
-    )
-  );
 end;
 
 procedure TTimeZoneAPI.BenchAPI;
 const
-  cBenchCount = 10000;
+  CBenchCount = 10000;
 var
   I, J: Integer;
   VCtx: Pointer;
@@ -96,11 +96,11 @@ var
   VTzInfo: TTzInfo;
   VTime: TStopwatch;
 begin
+  VTime := TStopwatch.Create;
+
   VCtx := tz_ctx_new();
   try
-    VTime := TStopwatch.Create;
-
-    for J := 0 to cBenchCount - 1 do begin
+    for J := 0 to CBenchCount - 1 do begin
       for I := 0 to Length(GBenchCases) - 1 do begin
         VUtcTime := ISO8601ToDate(GBenchCases[I].Utc);
 
@@ -112,11 +112,11 @@ begin
         Check(VResult);
       end;
     end;
-
-    OutputDebugString(PChar(IntToStr(VTime.ElapsedMilliseconds) + ' ms'));
   finally
     tz_ctx_free(VCtx);
   end;
+
+  OutputDebugString(PChar(VTime.ElapsedMilliseconds.ToString + ' ms'));
 end;
 
 initialization

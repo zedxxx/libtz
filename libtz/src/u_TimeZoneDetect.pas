@@ -40,14 +40,21 @@ uses
 
 {$IFDEF USE_POINT_DETECT_LIB}
 
-{$LINK 'point_detect.o'}
+{$IFDEF WIN32}
+  {$LINK 'win32\point_detect.o'}
+{$ELSE}
+  {$LINK 'win64\point_detect.o'}
+{$ENDIF}
 
-function IsPointInRect(const APoint: TTimeZonePoint;
-  const ARect: PTimeZoneBound): Boolean; cdecl; external name {$IFNDEF FPC}'_' + {$ENDIF}
+const
+  CPrefix = {$IF DEFINED(WIN32) AND NOT DEFINED(FPC)} '_' {$ELSE} '' {$IFEND};
+
+function IsPointInRect(APoint: TTimeZonePoint;
+  const ARect: PTimeZoneBound): Boolean; cdecl; external name CPrefix +
   {$IFDEF SMALL_POINT}'is_point_in_rect_16'{$ELSE}'is_point_in_rect_32'{$ENDIF};
 
-function IsPointInPolygon(const APoint: TTimeZonePoint; const ACount: Integer;
-  const APolyPoints: PTimeZonePoint): Boolean; cdecl; external name {$IFNDEF FPC}'_' + {$ENDIF}
+function IsPointInPolygon(APoint: TTimeZonePoint; const ACount: Integer;
+  const APolyPoints: PTimeZonePoint): Boolean; cdecl; external name CPrefix +
   {$IFDEF SMALL_POINT}'is_point_in_poly_16'{$ELSE}'is_point_in_poly_32'{$ENDIF};
 
 {$ELSE}

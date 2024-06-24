@@ -25,15 +25,15 @@ bool is_point_in_rect_32(const point_t p, const rect_t *r)
 }
 
 #ifdef SMALL_INT
-bool is_point_in_poly_16(const point_t p, int count, point_t *pp)
+bool is_point_in_poly_16(const point_t p, const int count, const point_t *pp)
 #else
-bool is_point_in_poly_32(const point_t p, int count, point_t *pp)
+bool is_point_in_poly_32(const point_t p, const int count, const point_t *pp)
 #endif
 {
     bool result = false;
 
-    point_t *p1 = pp;
-    point_t *p2 = pp + 1;
+    const point_t *p1 = pp;
+    const point_t *p2 = pp + 1;
 
     for (int i = 1; i < count; ++i) {
         if ( ((p2->y <= p.y) && (p.y < p1->y)) || ((p1->y <= p.y) && (p.y < p2->y)) ) {
