@@ -119,9 +119,9 @@ end;
 
 const
   CVersionInfo: TTzVersionInfo = (
-    Lib    : '1.2.0';
-    Data   : '2024a'; // https://github.com/pavkam/tzdb/releases
-    Border : '2024a'; // https://github.com/evansiroky/timezone-boundary-builder/releases
+    Lib    : '1.2.1';
+    Data   : '2025b'; // https://github.com/pavkam/tzdb/releases
+    Border : '2025b'; // https://github.com/evansiroky/timezone-boundary-builder/releases
   );
 
 function tz_get_version: PTzVersionInfo;
