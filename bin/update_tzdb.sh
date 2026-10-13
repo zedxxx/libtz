@@ -9,6 +9,6 @@ cd tz-db
 
 git reset --hard
 
-./update-compile.sh
+exec ./scripts/update.sh
 
 read -p "Press ENTER to exit..."
